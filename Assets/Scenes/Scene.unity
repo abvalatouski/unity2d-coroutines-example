@@ -525,6 +525,7 @@ MonoBehaviour:
   keyPressListener: {fileID: 845369429}
   movee: {fileID: 764444085}
   moveDuration: 0.125
+  scaleDuration: 0.5
 --- !u!4 &1254753753
 Transform:
   m_ObjectHideFlags: 0

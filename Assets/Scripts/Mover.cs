@@ -10,6 +10,7 @@ public class Mover : MonoBehaviour
     [SerializeField] private KeyPressListener keyPressListener;
     [SerializeField] private Image movee;
     [SerializeField] private float moveDuration;
+    [SerializeField] private float scaleDuration;
 
     private WaitForEvent waitForKeyPress;
     private CancellationTokenSource cancellationTokenSource;
@@ -25,12 +26,15 @@ public class Mover : MonoBehaviour
     
     private void OnDestroy()
     {
+        movee.materialForRendering.color = Color.white;
         cancellationTokenSource?.Dispose();
     }
 
     private IEnumerator Movement()
     {
-        yield return RequestColor();
+        yield return new WaitForAll(this,
+            RequestColor(),
+            YoyoishScale());
 
         while (true)
         {
@@ -39,13 +43,8 @@ public class Mover : MonoBehaviour
             {
                 StartCoroutine(RequestColor());
             }
-        
-            yield return movee.rectTransform
-                .DOMove(
-                    movee.rectTransform.rect.size * GetMovementDirection(),
-                    moveDuration)
-                .SetRelative()
-                .WaitForCompletion();
+
+            yield return Move();    
         }
     }
 
@@ -60,6 +59,25 @@ public class Mover : MonoBehaviour
             color.b,
             "A color has arrived from the Internet!");
         movee.materialForRendering.color = color;
+    }
+
+    private IEnumerator YoyoishScale()
+    {
+        yield return movee.rectTransform
+            .DOScale(2, scaleDuration)
+            .SetEase(Ease.InOutSine)
+            .SetLoops(2, LoopType.Yoyo)
+            .WaitForCompletion();
+    }
+
+    private IEnumerator Move()
+    {
+        yield return movee.rectTransform
+            .DOMove(
+                movee.rectTransform.rect.size * GetMovementDirection(),
+                moveDuration)
+            .SetRelative()
+            .WaitForCompletion();
     }
 
     private Vector2 GetMovementDirection()
