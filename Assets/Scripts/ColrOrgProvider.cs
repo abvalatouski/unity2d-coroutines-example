@@ -11,28 +11,28 @@ public class ColrOrgProvider : IProvider<Color32>
 {
     private readonly HttpClient httpClient;
     private readonly Uri uri;
-    private readonly int numberOfRetries;
+    private readonly int maxRetries;
 
     public ColrOrgProvider()
     {
         httpClient = new HttpClient();
         uri = new Uri("https://www.colr.org/json/color/random");
-        numberOfRetries = 5;
+        maxRetries = 5;
     }
 
     public async Task<Color32> ProvideAsync(CancellationToken cancellationToken)
     {
-        for (var i = numberOfRetries; ; i--)
+        for (var i = maxRetries; ; )
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (numberOfRetries == 0)
+            if (maxRetries == 0)
             {
                 throw new Exception("<color=#F00000>Bruh. The API is broken. (._.)</color>");
             }
 
             byte[] bytes = await Task.Run(() => httpClient.GetByteArrayAsync(uri), cancellationToken);
+
             using var jsonReader = new JsonTextReader(new StreamReader(new MemoryStream(bytes)));
-            
             MoveToJsonHexValue(jsonReader);
             if (TryParseHexColor(jsonReader.ReadAsString(), out var color))
             {
@@ -40,6 +40,7 @@ public class ColrOrgProvider : IProvider<Color32>
             }
 
             Debug.Log("Pending...");
+            i--;
         }
     }
 
