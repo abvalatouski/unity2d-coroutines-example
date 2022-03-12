@@ -19,7 +19,7 @@ public class Mover : MonoBehaviour
     {
         waitForKeyPress = new WaitForEvent(keyPressListener.OnKeyPressed);
         cancellationTokenSource = new CancellationTokenSource();
-        colorProvider = new ColorProvider();
+        colorProvider = new ColrOrgProvider();
         StartCoroutine(Movement());
     }
     
