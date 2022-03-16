@@ -22,15 +22,11 @@ public class ColrOrgProvider : IProvider<Color32>
 
     public async Task<Color32> ProvideAsync(CancellationToken cancellationToken)
     {
-        for (var i = maxRetries; ; )
+        for (var i = maxRetries; maxRetries != 0; i--)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (maxRetries == 0)
-            {
-                throw new Exception("<color=#F00000>Bruh. The API is broken. (._.)</color>");
-            }
-
             byte[] bytes = await Task.Run(() => httpClient.GetByteArrayAsync(uri), cancellationToken);
+            await Task.Delay(5000, cancellationToken);
 
             using var jsonReader = new JsonTextReader(new StreamReader(new MemoryStream(bytes)));
             MoveToJsonHexValue(jsonReader);
@@ -40,8 +36,9 @@ public class ColrOrgProvider : IProvider<Color32>
             }
 
             Debug.Log("Pending...");
-            i--;
         }
+
+        throw new Exception("<color=#F00000>Bruh. The API is broken. (._.)</color>");
     }
 
     private void MoveToJsonHexValue(JsonReader jsonReader)

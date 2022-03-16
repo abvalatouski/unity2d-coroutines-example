@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Threading;
 
@@ -33,7 +34,7 @@ public class Mover : MonoBehaviour
     private IEnumerator Movement()
     {
         yield return new WaitForAll(this,
-            RequestColor(),
+            RequestColor(CancellationToken.None),
             YoyoishScale());
 
         while (true)
@@ -41,24 +42,38 @@ public class Mover : MonoBehaviour
             yield return waitForKeyPress;
             if (keyPressListener.LastKeyCode == KeyCode.Space)
             {
-                StartCoroutine(RequestColor());
+                cancellationTokenSource?.Dispose();
+                cancellationTokenSource = new CancellationTokenSource();
+                StartCoroutine(RequestColor(cancellationTokenSource.Token));
+            }
+            else if (keyPressListener.LastKeyCode == KeyCode.Backspace)
+            {
+                cancellationTokenSource.Cancel();
             }
 
             yield return Move();    
         }
     }
 
-    private IEnumerator RequestColor()
+    private IEnumerator RequestColor(CancellationToken cancellationToken)
     {
         yield return new WaitForTask<Color32>(
-            colorProvider.ProvideAsync(cancellationTokenSource.Token),
-            out var color);
-        Debug.LogFormat("#{0:X2}{1:X2}{2:X2} <color=#{0:X2}{1:X2}{2:X2}>{3}</color>",
-            color.r,
-            color.g,
-            color.b,
-            "A color has arrived from the Internet!");
-        movee.materialForRendering.color = color;
+            colorProvider.ProvideAsync(cancellationToken),
+            out var color,
+            out var exception);
+        if (exception is null)
+        {
+            Debug.LogFormat("#{0:X2}{1:X2}{2:X2} <color=#{0:X2}{1:X2}{2:X2}>{3}</color>",
+                color.r,
+                color.g,
+                color.b,
+                "A color has arrived from the Internet!");
+            movee.materialForRendering.color = color;
+        }
+        else
+        {
+            Debug.Log(exception);
+        }
     }
 
     private IEnumerator YoyoishScale()
