@@ -19,7 +19,6 @@ public class Mover : MonoBehaviour
 
     private void Awake()
     {
-        cancellationTokenSource = new CancellationTokenSource();
         colorProvider = new ColrOrgProvider();
     }
 
@@ -35,6 +34,16 @@ public class Mover : MonoBehaviour
         cancellationTokenSource?.Dispose();
     }
 
+    private Coroutine StartCoroutine(IEnumerator routine, bool pin = false)
+    {
+        if (pin)
+        {
+            GCHandle.Alloc(routine, GCHandleType.Pinned);
+        }
+
+        return base.StartCoroutine(routine);
+    }
+
     private IEnumerator Movement()
     {
         yield return new WaitForAll(this,
@@ -46,11 +55,8 @@ public class Mover : MonoBehaviour
             yield return waitForKeyPress;
             if (keyPressListener.LastKeyCode == KeyCode.Space)
             {
-                cancellationTokenSource?.Dispose();
-                cancellationTokenSource = new CancellationTokenSource();
-                GCHandle.Alloc(
-                    StartCoroutine(RequestColor(cancellationTokenSource.Token)),
-                    GCHandleType.Pinned);
+                ResetCancellationTokenSource();
+                StartCoroutine(RequestColor(cancellationTokenSource.Token), pin: true);
             }
             else if (keyPressListener.LastKeyCode == KeyCode.Backspace)
             {
@@ -120,5 +126,11 @@ public class Mover : MonoBehaviour
             default:
                 return new Vector2(+0, +0);
         }
+    }
+
+    private void ResetCancellationTokenSource()
+    {
+        cancellationTokenSource?.Dispose();
+        cancellationTokenSource = new CancellationTokenSource();
     }
 }
