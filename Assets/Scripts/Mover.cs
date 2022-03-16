@@ -1,6 +1,6 @@
-using System;
 using System.Collections;
 using System.Threading;
+using System.Runtime.InteropServices;
 
 using DG.Tweening;
 using UnityEngine;
@@ -13,15 +13,19 @@ public class Mover : MonoBehaviour
     [SerializeField] private float moveDuration;
     [SerializeField] private float scaleDuration;
 
-    private WaitForEvent waitForKeyPress;
     private CancellationTokenSource cancellationTokenSource;
     private IProvider<Color32> colorProvider;
+    private WaitForEvent waitForKeyPress;
+
+    private void Awake()
+    {
+        cancellationTokenSource = new CancellationTokenSource();
+        colorProvider = new ColrOrgProvider();
+    }
 
     private void Start()
     {
         waitForKeyPress = new WaitForEvent(keyPressListener.OnKeyPressed);
-        cancellationTokenSource = new CancellationTokenSource();
-        colorProvider = new ColrOrgProvider();
         StartCoroutine(Movement());
     }
     
@@ -44,7 +48,9 @@ public class Mover : MonoBehaviour
             {
                 cancellationTokenSource?.Dispose();
                 cancellationTokenSource = new CancellationTokenSource();
-                StartCoroutine(RequestColor(cancellationTokenSource.Token));
+                GCHandle.Alloc(
+                    StartCoroutine(RequestColor(cancellationTokenSource.Token)),
+                    GCHandleType.Pinned);
             }
             else if (keyPressListener.LastKeyCode == KeyCode.Backspace)
             {

@@ -26,7 +26,6 @@ public class ColrOrgProvider : IProvider<Color32>
         {
             cancellationToken.ThrowIfCancellationRequested();
             byte[] bytes = await Task.Run(() => httpClient.GetByteArrayAsync(uri), cancellationToken);
-            await Task.Delay(5000, cancellationToken);
 
             using var jsonReader = new JsonTextReader(new StreamReader(new MemoryStream(bytes)));
             MoveToJsonHexValue(jsonReader);
